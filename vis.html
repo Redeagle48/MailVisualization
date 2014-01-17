@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Who have I been talking to?</title>
+<style>
+    
+    text {
+        font: 11px sans-serif;
+    }
+    
+    .bullet { font: 10px sans-serif; }
+    .bullet .marker { stroke: #000; stroke-width: 2px; }
+    .bullet .tick line { stroke: #666; stroke-width: 1px; }
+    .bullet .range.s0 { fill: #eee; }
+    .bullet .range.s1 { fill: #eee; }
+    .bullet .range.s2 { fill: #eee; }
+    .bullet .title { font-size: 14px; font-weight: bold; }
+    .bullet .subtitle { fill: #999; }
+    .bullet .locationMin { font-size: 12px; }
+    .bullet .locationMax { font-size: 12px; }
+    
+    
+</style>
+<body>
+   
+    <div style="padding-left: 30px; font-family: sans-serif" id="body">
+        <h1>Who have I been talking to?</h1>
+    </div>
+    
+    <div style="margin-left:8%">
+        <table width="75%" align="left">
+            <tr>
+                <td style="padding-left: 30px; font-family: sans-serif; text-align: left"><b>People who sent me emails</b></td>
+                <td style="padding-right: 30px; font-family: sans-serif; text-align: right"><b>People I emailed</b></td>
+            </tr>
+        </table>
+    </div>
+   
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="times.js"></script>
+    
+    <script>
+
+        var file = "total";
+        loadFile(file);
+
+        var diameter = screen.width/2 - screen.width/20,
+                format = d3.format(",d"),
+                color = d3.scale.category20c();
+
+        var bubble = d3.layout.pack()
+                .sort(null)
+                .size([diameter, screen.height/1.9])
+                .padding(1.5);
+        
+
+        var svg = d3.select("body").append("svg")
+                .attr("width", screen.width/2 - screen.width/20)
+                .attr("height", screen.height/1.8 - screen.height/50)
+                .attr("class", "bubble");
+        
+        var svgg = d3.select("body").append("svg")
+                .attr("width", screen.width/2 - screen.width/20)
+                .attr("height", screen.height/1.8 - screen.height/50)
+                .attr("class", "bubble");
+
+        // RECEIVED EMAILS
+        d3.json("received_results.json", function(error, root) {
+            var node = svg.selectAll(".node")
+                    .data(bubble.nodes(classes(root))
+                    .filter(function(d) { return !d.children; }))
+                    .enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+                    .on("mouseover", function(d,i) {
+                        d3.selectAll(".node").transition().duration(200)
+                        .style({'opacity':0.5});
+                    
+                        d3.select(this).transition().duration(200)
+                        .style({'opacity':1});
+
+                        file = d.className; 
+                        loadFile(file);
+                        
+                        d3.select(this).append("text")
+                            .attr("dx", "2em")
+                            .attr("dy", "-2em")
+                            .attr("id", "emailtext")
+                            .style("text-anchor", "middle")
+                            .text(function(d) { return "(" + d.value + " emails)";});
+                        d3.select(this).append("text")
+                            .attr("dy", "-1em")
+                            .attr("id", "completename")
+                            .style("text-anchor", "middle")
+                            .text(function(d) { return d.className; });
+            
+            })
+
+                    .on("mouseout", function(d,i) { 
+                        d3.selectAll(".node").transition().duration(300)
+                        .style({'opacity':1});
+                
+                        d3.select("#emailtext").remove();
+                        d3.select("#completename").remove();
+
+                        file = "total";
+                        loadFile(file);
+            })
+            // info from the user
+                    .on("mousedown", function(d,i) {
+                        //document.getElementById("name").innerHTML = d.className.substring(0, d.r / 3);
+                //window.open("vis_detailed.html", "_self");
+                
+            });
+
+            node.append("circle")
+                    .attr("r", function(d) { return d.r; })
+                    .style("fill", d3.rgb(255,127,0));
+
+            node.append("text")
+                    .attr("dy", ".3em")
+                    .attr("width", 300)
+                    .style("text-anchor", "middle")
+                    .text(function(d) { return d.className.substring(0, d.r / 3); });
+        }); 
+        
+        // SENT EMAILS
+        d3.json("sent_results.json", function(error, root) {
+            var node = svgg.selectAll(".node")
+                    .data(bubble.nodes(classes(root))
+                    .filter(function(d) { return !d.children; }))
+                    .enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+                    .on("mouseover", function(d,i) {
+                        d3.selectAll(".node").transition().duration(300)
+                        .style({'opacity':0.5});
+                
+                        d3.select(this).transition().duration(300)
+                        .style({'opacity':1});
+                
+                        file = d.className; 
+                        loadFile(file);
+                        
+                        d3.select(this).append("text")
+                            .attr("dx", "2em")
+                            .attr("dy", "-2em")
+                            .attr("id", "emailtext")
+                            .style("text-anchor", "middle")
+                            .text(function(d) { return "(" + d.value + " emails)";});
+                        d3.select(this).append("text")
+                            .attr("dy", "-1em")
+                            .attr("id", "completename")
+                            .style("text-anchor", "middle")
+                            .text(function(d) { return d.className; });
+                
+            })
+                    .on("mouseout", function(d,i) { 
+                        d3.selectAll(".node").transition().duration(300)
+                        .style({'opacity':1});
+                
+                    d3.select("#emailtext").remove();
+                    d3.select("#completename").remove();
+                
+                    file = "total";
+                    loadFile(file);
+            });
+
+            node.append("circle")
+                    .attr("r", function(d) { return d.r; })
+                    .style("fill", d3.rgb(0,128,255));
+
+            node.append("text")
+                    .attr("dy", ".3em")
+                    .style("text-anchor", "middle")
+                    .text(function(d) { return d.className.substring(0, d.r / 3);});
+        });
+
+        // Returns a flattened hierarchy containing all leaf nodes under the root.
+        function classes(root) {
+            var classes = [];
+
+            function recurse(name, node) {
+                if (node.children) node.children.forEach(function(child) { recurse(node.name, child); });
+                else classes.push({packageName: name, className: node.name, value: node.size});
+            }
+            
+
+            recurse(null, root);
+            return {children: classes};
+        }
+
+        d3.select(self.frameElement).style("height", diameter + "px");
+        
+        
+        /*
+         * BARS
+         */
+        
+        
+        var margin = {top: 15, right: 40, bottom: 20, left: 320},
+                width = 960 - margin.left - margin.right,
+                height = 50 - margin.top - margin.bottom;
+
+        var chart = d3.bullet()
+                .width(width)
+                .height(height);
+            
+            
+        function loadFile(filename) {
+            d3.select("#charts").remove();
+            
+            d3.json("files/" + filename + ".json", function(error, data) {
+                var svg2 = d3.select("body").selectAll("svg")
+                        .data(data)
+                        .enter().append("svg")
+                        .attr("class", "bullet")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .attr("id","charts")
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .call(chart);
+                var title = svg2.append("g")
+                        .style("text-anchor", "end")
+                        .attr("transform", "translate(-6," + height / 2 + ")");
+
+                title.append("text")
+                        .attr("class", "title")
+                        .text(function(d) { return d.title; });
+
+                title.append("text")
+                        .attr("class", "subtitle")
+                        .attr("dy", "1em")
+                        .text(function(d) { return d.subtitle; });
+                
+                title.append("text")
+                        .attr("class", "locationMin")
+                        .attr("x", 50)
+                        .attr("dy", "-1.2em")
+                        .text(function(d) { 
+                            if(d.locationMin === "") {
+                                return "[No data to compute]";
+                            } 
+                            else{ 
+                                return "I was at " + d.locationMin;
+                            } });
+                title.append("text")
+                        .attr("class", "locationMax")
+                        .attr("x", 620)
+                        .attr("dy", "-1.2em")
+                        .text(function(d) { 
+                            if(d.locationMax === "") {
+                                return "[No data to compute]";
+                            } 
+                            else{ 
+                                return "I was at " + d.locationMax;
+                            } });
+            }); 
+
+        
+            function randomize(d) {
+                if (!d.randomizer) d.randomizer = randomizer(d);
+                d.ranges = d.ranges.map(d.randomizer);
+                d.markers = d.markers.map(d.randomizer);
+                return d;
+            }
+
+            function randomizer(d) {
+                var k = d3.max(d.ranges) * .2;
+                return function(d) {
+                    return Math.max(0, d + k * (Math.random() - .5));
+                };
+            }
+        }
+
+    </script>
+    
